@@ -19,7 +19,7 @@
 */
   
 #include "grbl.h"
-
+#include "serial2.h"
 
 // Inverts the probe pin state depending on user settings and probing cycle mode.
 uint8_t probe_invert_mask;
@@ -35,6 +35,80 @@ void probe_init()
     PROBE_PORT |= PROBE_MASK;    // Enable internal pull-up resistors. Normal high operation.
   #endif
   // probe_configure_invert_mask(false); // Initialize invert mask. Not required. Updated when in-use.
+  serial2_init();
+  uart_printf("probe init called\r\n");
+}
+
+//CRC-8 - based on the CRC8 formulas by Dallas/Maxim
+//code released under the therms of the GNU GPL 3.0 license
+#define byte uint8_t
+byte CRC8(const byte *data, byte len) {
+  byte crc = 0x00;
+  while (len--) {
+    byte extract = *data++;
+    for (byte tempI = 8; tempI; tempI--) {
+      byte sum = (crc ^ extract) & 0x01;
+      crc >>= 1;
+      if (sum) {
+        crc ^= 0x8C;
+      }
+      extract >>= 1;
+    }
+  }
+  return crc;
+}
+
+void probe_set_limit(uint16_t limit) {
+
+	char lowByte = (uint8_t)(0x00FF & limit);
+	char highByte = (uint8_t)((0xFF00 & limit)>>8);
+
+	uart_printf("sending %02x %02x to Attiny85\r\n", lowByte, highByte);
+
+	serial2_write(0xAA);
+	serial2_write(lowByte);
+	serial2_write(highByte);
+	serial2_write(0xCC);//CRC8((const byte*){lowByte,highByte},2) );
+
+//	const char test[] = "das ist ein test";
+//
+//	for(int i = 0; i < 16; i++)
+//		serial2_write(test[i]);
+
+//	while(!serial2_tx_buffer_tail < 1);
+	int resp = SERIAL_NO_DATA;
+	unsigned long retryCnt = 0;
+	int receivedBytes = 0;
+
+//	while(((resp = serial2_read()) == SERIAL_NO_DATA) && (retryCnt < 1000000)) {
+////		delay_us(1000);
+//		retryCnt++;
+//	}
+//
+//	receivedBytes++;
+
+	delay_ms(1000);
+
+#define NUM_EXP_BYTES 2 //OK for ok, NA for not ok
+	uint8_t buf[5];
+//	buf[0] = resp;
+	buf[NUM_EXP_BYTES] = 0;
+	retryCnt = 1;
+
+	while(receivedBytes < NUM_EXP_BYTES && retryCnt < 10000) {
+		resp = serial2_read();
+		delay_us(100);
+		if(resp != SERIAL_NO_DATA)
+			buf[receivedBytes++] = resp;
+		retryCnt++;
+	}
+
+	uart_printf("delay was %d, resp = %02X\r\n", retryCnt, resp);
+	uart_printf("received %d chars from Attiny85\r\n", receivedBytes);
+	uart_printf("Received from Attiny85: ");
+	for(int i = 0; i < receivedBytes; i++)
+		uart_printf("%02x ", buf[i]);
+	uart_printf("\r\n");
 }
 
 

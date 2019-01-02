@@ -358,7 +358,7 @@ uint8_t gc_execute_line(char *line)
           case 'N': word_bit = WORD_N; gc_block.values.n = trunc(value); break;
           case 'P': word_bit = WORD_P; gc_block.values.p = value; break;
           // NOTE: For certain commands, P value must be an integer, but none of these commands are supported.
-          // case 'Q': // Not supported
+          case 'Q': word_bit = WORD_Q; gc_block.values.q = int_value; break;//DB_PRINT_STR("Q-Value: "); DB_PRINT_INT(gc_block.values.q); DB_PRINT_STR("\r\n");break;
           case 'R': word_bit = WORD_R; gc_block.values.r = value; break;
           case 'S': word_bit = WORD_S; gc_block.values.s = value; break;
           case 'T': word_bit = WORD_T; break; // gc.values.t = int_value;
@@ -603,7 +603,6 @@ uint8_t gc_execute_line(char *line)
       break;
       
     default:
-
       // At this point, the rest of the explicit axis commands treat the axis values as the traditional
       // target position with the coordinate system offsets, G92 offsets, absolute override, and distance
       // modes applied. This includes the motion mode commands. We can now pre-compute the target position.
@@ -630,7 +629,7 @@ uint8_t gc_execute_line(char *line)
         }
       }
           
-      // Check remaining non-modal commands for errors.
+     // Check remaining non-modal commands for errors.
       switch (gc_block.non_modal_command) {        
         case NON_MODAL_GO_HOME_0: 
           // [G28 Errors]: Cutter compensation is enabled. 
@@ -844,9 +843,10 @@ uint8_t gc_execute_line(char *line)
   // radius mode, or axis words that aren't used in the block.  
   bit_false(value_words,(bit(WORD_N)|bit(WORD_F)|bit(WORD_S)|bit(WORD_T))); // Remove single-meaning value words. 
   if (axis_command) { bit_false(value_words,(bit(WORD_X)|bit(WORD_Y)|bit(WORD_Z))); } // Remove axis words. 
+  //unset Q bit for G38.2 analog pin limit value
+  bit_false(value_words, bit(WORD_Q));
   if (value_words) { FAIL(STATUS_GCODE_UNUSED_WORDS); } // [Unused words]
 
-   
   /* -------------------------------------------------------------------------------------
      STEP 4: EXECUTE!!
      Assumes that all error-checking has been completed and no failure modes exist. We just
@@ -1016,28 +1016,28 @@ uint8_t gc_execute_line(char *line)
           #ifdef USE_LINE_NUMBERS
             mc_probe_cycle(gc_block.values.xyz, gc_state.feed_rate, gc_state.modal.feed_rate, false, false, gc_state.line_number);
           #else
-            mc_probe_cycle(gc_block.values.xyz, gc_state.feed_rate, gc_state.modal.feed_rate, false, false);
+            mc_probe_cycle(gc_block.values.xyz, gc_state.feed_rate, gc_state.modal.feed_rate, false, false, gc_block.values.q);
           #endif
           break;
         case MOTION_MODE_PROBE_TOWARD_NO_ERROR:
           #ifdef USE_LINE_NUMBERS
             mc_probe_cycle(gc_block.values.xyz, gc_state.feed_rate, gc_state.modal.feed_rate, false, true, gc_state.line_number);
           #else
-            mc_probe_cycle(gc_block.values.xyz, gc_state.feed_rate, gc_state.modal.feed_rate, false, true);
+            mc_probe_cycle(gc_block.values.xyz, gc_state.feed_rate, gc_state.modal.feed_rate, false, true, 0);
           #endif
           break;
         case MOTION_MODE_PROBE_AWAY:
           #ifdef USE_LINE_NUMBERS
             mc_probe_cycle(gc_block.values.xyz, gc_state.feed_rate, gc_state.modal.feed_rate, true, false, gc_state.line_number);
           #else
-            mc_probe_cycle(gc_block.values.xyz, gc_state.feed_rate, gc_state.modal.feed_rate, true, false);
+            mc_probe_cycle(gc_block.values.xyz, gc_state.feed_rate, gc_state.modal.feed_rate, true, false, 0);
           #endif
           break;
         case MOTION_MODE_PROBE_AWAY_NO_ERROR:
           #ifdef USE_LINE_NUMBERS
             mc_probe_cycle(gc_block.values.xyz, gc_state.feed_rate, gc_state.modal.feed_rate, true, true, gc_state.line_number);
           #else        
-            mc_probe_cycle(gc_block.values.xyz, gc_state.feed_rate, gc_state.modal.feed_rate, true, true);
+            mc_probe_cycle(gc_block.values.xyz, gc_state.feed_rate, gc_state.modal.feed_rate, true, true, 0);
           #endif
       }
     

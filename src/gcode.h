@@ -138,6 +138,7 @@
 #define WORD_X  10
 #define WORD_Y  11
 #define WORD_Z  12
+#define WORD_Q  13
 
 
 // NOTE: When this struct is zeroed, the above defines set the defaults for the system.
@@ -163,7 +164,7 @@ typedef struct {
   uint8_t l;       // G10 or canned cycles parameters
   int32_t n;       // Line number
   float p;         // G10 or dwell parameters
-  // float q;      // G82 peck drilling
+  uint16_t q;      // G38.2 analog pin limit value
   float r;         // Arc radius
   float s;         // Spindle speed
   uint8_t t;       // Tool selection

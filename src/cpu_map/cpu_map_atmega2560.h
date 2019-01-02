@@ -112,10 +112,17 @@
 #define CONTROL_MASK ((1<<RESET_BIT)|(1<<FEED_HOLD_BIT)|(1<<CYCLE_START_BIT)|(1<<SAFETY_DOOR_BIT))
 #define CONTROL_INVERT_MASK CONTROL_MASK // May be re-defined to only invert certain control pins.
 
-// Define probe switch input pin.
-#define PROBE_DDR       DDRD
-#define PROBE_PIN       PIND
-#define PROBE_PORT      PORTD
+// Define probe switch input pin. (originals)
+//#define PROBE_DDR       DDRD
+//#define PROBE_PIN       PIND
+//#define PROBE_PORT      PORTD
+//#define PROBE_BIT       4  // MEGA2560 Analog Pin 15
+//#define PROBE_MASK      (1<<PROBE_BIT)
+
+// Define probe switch input pin. (for terminal test robot)
+#define PROBE_DDR       DDRL
+#define PROBE_PIN       PINL
+#define PROBE_PORT      PORTL
 #define PROBE_BIT       4  // MEGA2560 Analog Pin 15
 #define PROBE_MASK      (1<<PROBE_BIT)
 

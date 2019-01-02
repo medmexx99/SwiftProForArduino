@@ -44,7 +44,7 @@
   if (bit_istrue(settings.flags,BITFLAG_SOFT_LIMIT_ENABLE)) { limits_soft_check(target); }    
       
   // If in check gcode mode, prevent motion by blocking planner. Soft limits still work.
-  if (sys.state == STATE_CHECK_MODE) { return; }
+  if (sys.state == STATE_CHECK_MODE) { return 0; }
     
   // NOTE: Backlash compensation may be installed here. It will need direction info to track when
   // to insert a backlash line motion(s) before the intended line motion and will require its own
@@ -119,7 +119,7 @@
 			break;
 	}
 	
-//	DB_PRINT_STR( "divide num : %d\r\n", divide_numbers );
+  DB_PRINT_STR( "divide num : %d\r\n", divide_numbers );
 	
 	float delta_coord[3];
   delta_coord[X_AXIS] = (target[X_AXIS] - current_coord[X_AXIS]) / divide_numbers; 					// calculate delta coord
@@ -360,11 +360,18 @@ void mc_homing_cycle()
     uint8_t is_no_error, int32_t line_number)
 #else
   void mc_probe_cycle(float *target, float feed_rate, uint8_t invert_feed_rate, uint8_t is_probe_away,
-    uint8_t is_no_error)
+    uint8_t is_no_error, uint16_t limit)
 #endif
 { 
   // TODO: Need to update this cycle so it obeys a non-auto cycle start.
   if (sys.state == STATE_CHECK_MODE) { return; }
+
+  // set limit val for probing:
+  if(limit > 0 && limit < 1024) {
+	  probe_set_limit(limit);
+  }
+//  else
+//	  probe_set_limit(500);
 
   // Finish all queued commands and empty planner buffer before starting probe cycle.
   protocol_buffer_synchronize();
@@ -398,8 +405,9 @@ void mc_homing_cycle()
     if (sys.abort) { return; } // Check for system abort
   } while (sys.state != STATE_IDLE);
   
-  // Probing cycle complete!
-  
+//  ADCSRA = 0;//disable adc auto trigger, interrupts ...
+//  ADCSRB = 0;
+
   // Set state variables and error out, if the probe failed and cycle with error is enabled.
   if (sys_probe_state == PROBE_ACTIVE) {
     if (is_no_error) { memcpy(sys.probe_position, sys.position, sizeof(float)*N_AXIS); }
@@ -410,6 +418,7 @@ void mc_homing_cycle()
   sys_probe_state = PROBE_OFF; // Ensure probe state monitor is disabled.
   protocol_execute_realtime();   // Check and execute run-time commands
   if (sys.abort) { return; } // Check for system abort
+  // Probing cycle complete!
 
   // Reset the stepper and planner buffers to remove the remainder of the probe motion.
   st_reset(); // Reest step segment buffer.
@@ -420,6 +429,9 @@ void mc_homing_cycle()
   // NOTE: The target[] variable updated here will be sent back and synced with the g-code parser.
   system_convert_array_steps_to_mpos(target, sys.position);
 
+//  DB_PRINT_STR("counter are: isr: ");DB_PRINT_INT(probe_getOverflowCnt());DB_PRINT_STR(".");DB_PRINT_INT(probe_getIsrCnt());
+//  DB_PRINT_STR(" ,monitor :");DB_PRINT_INT(probe_getMonCnt());DB_PRINT_STR("\r\n");
+//  DB_PRINT_STR("curVal : ");DB_PRINT_INT(probe_getVal());DB_PRINT_STR("\r\n");
   #ifdef MESSAGE_PROBE_COORDINATES
     // All done! Output the probe position as message.
     report_probe_parameters();

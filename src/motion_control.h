@@ -58,7 +58,7 @@ void mc_probe_cycle(float *target, float feed_rate, uint8_t invert_feed_rate, ui
   uint8_t is_no_error, int32_t line_number);
 #else
 void mc_probe_cycle(float *target, float feed_rate, uint8_t invert_feed_rate, uint8_t is_probe_away,
-  uint8_t is_no_error);
+  uint8_t is_no_error, uint16_t limit);
 #endif
 
 // Performs system reset. If in motion state, kills all motion and sets system alarm.

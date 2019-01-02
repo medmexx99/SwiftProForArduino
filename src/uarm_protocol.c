@@ -1177,6 +1177,25 @@ static void uarm_cmd_p2400(void){
 	sprintf( tail_report_str, " V%d\n", uarm.param.work_mode );	
 }
 
+static void uarm_cmd_p6666(void){
+
+	int pos = 0;
+	int pinN = 13;
+
+	for(int i = 0; i <= 1; i++) {
+		int val = analogRead(pinN);
+		//int val = probe_getVal();
+		DB_PRINT_STR("Value of analog PIN "); DB_PRINT_INT(pinN); DB_PRINT_STR("V");DB_PRINT_INT(val);DB_PRINT_STR("\r\n");
+//		int charPrinted = sprintf( tail_report_str+pos, "%dV%d\t", pinN, val);
+//		if(charPrinted > 0)
+//			pos += charPrinted;
+//		else {
+//			DB_PRINT_STR( "sprintf failed for PIN A"); DB_PRINT_INT(pinN); DB_PRINT_STR("\r\n");
+//		}
+		//delay_ms(1);
+	}
+	//sprintf( tail_report_str + pos, "\n");
+}
 
 enum uarm_protocol_e uarm_execute_p_cmd(uint16_t cmd, char *line, uint8_t *char_counter){
 
@@ -1263,6 +1282,9 @@ enum uarm_protocol_e uarm_execute_p_cmd(uint16_t cmd, char *line, uint8_t *char_
 			break;
 		case 2400:
 							uarm_cmd_p2400();
+							return UARM_CMD_OK;
+		case 6666:
+							uarm_cmd_p6666();
 							return UARM_CMD_OK;
 			break;	
 	}

@@ -40,4 +40,7 @@ uint8_t probe_get_state();
 // stepper ISR per ISR tick.
 void probe_state_monitor();
 
+//set limit of force value for probing with force sensor attached to attiny85
+void probe_set_limit(uint16_t limit);
+
 #endif
